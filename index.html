@@ -4,54 +4,87 @@
     <meta charset="UTF-8">
     <title>ChatCQ - 火腿专属 AI</title>
     <style>
+        /* 默认深色模式变量 */
         :root {
+            --bg-color: #1e1e1e;
+            --sidebar-bg: #252526;
+            --text-color: #cccccc;
+            --border-color: #3e3e42;
+            --msg-user-bg: #2d2d2d;
+            --msg-bot-bg: #1e1e1e;
+            --accent-color: #007acc;
+            --input-bg: #2d2d2d;
+            --danger-color: #f44336;
+            --shadow: rgba(0,0,0,0.3);
+        }
+
+        /* 白色模式变量 */
+        body.theme-light {
             --bg-color: #f9f9fb;
             --sidebar-bg: #ffffff;
             --text-color: #333333;
             --border-color: #e5e5e5;
             --msg-user-bg: #f3f4f6;
             --msg-bot-bg: #ffffff;
-            --accent-color: #4d6bfe; 
+            --accent-color: #4d6bfe;
             --input-bg: #ffffff;
-            --danger-color: #ff4d4f;
+            --shadow: rgba(0,0,0,0.05);
         }
 
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background-color: var(--bg-color); color: var(--text-color); display: flex; height: 100vh; margin: 0; padding: 0; overflow: hidden; }
+        /* 黑客模式变量 */
+        body.theme-hacker {
+            --bg-color: #000000;
+            --sidebar-bg: #0a0a0a;
+            --text-color: #00ff00;
+            --border-color: #005500;
+            --msg-user-bg: #002200;
+            --msg-bot-bg: #000000;
+            --accent-color: #00ff00;
+            --input-bg: #000000;
+            --shadow: rgba(0,255,0,0.1);
+        }
+
+        /* 黑客模式全局字体替换 */
+        body.theme-hacker * { font-family: 'Courier New', Courier, monospace !important; text-shadow: 0 0 3px #00ff00; }
+        body.theme-hacker .message { border: 1px solid var(--border-color); }
+
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background-color: var(--bg-color); color: var(--text-color); display: flex; height: 100vh; margin: 0; padding: 0; overflow: hidden; transition: background-color 0.3s, color 0.3s; }
         
         /* 侧边栏 */
         .sidebar { width: 260px; background: var(--sidebar-bg); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; }
         .sidebar-header { padding: 20px 15px; }
         .logo-text { font-size: 20px; font-weight: bold; color: var(--accent-color); margin-bottom: 15px; display: flex; align-items: center; gap: 8px;}
-        .new-chat-btn { width: 100%; padding: 12px; background: var(--accent-color); color: white; border: none; border-radius: 12px; font-weight: 500; font-size: 14px; cursor: pointer; transition: 0.2s; display: flex; justify-content: center; align-items: center; gap: 5px;}
-        .new-chat-btn:hover { background: #3b58db; }
+        .new-chat-btn { width: 100%; padding: 12px; background: var(--accent-color); color: #fff; border: none; border-radius: 12px; font-weight: 500; font-size: 14px; cursor: pointer; transition: 0.2s; display: flex; justify-content: center; align-items: center; gap: 5px;}
+        .new-chat-btn:hover { opacity: 0.8; }
         .import-btn { width: 100%; padding: 10px; background: transparent; color: var(--text-color); border: 1px solid var(--border-color); border-radius: 12px; font-size: 13px; cursor: pointer; margin-top: 10px; transition: 0.2s;}
-        .import-btn:hover { background: #f3f4f6; }
+        .import-btn:hover { background: var(--msg-user-bg); }
         
         .history-list { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 5px; }
         
-        /* 对话列表项 */
-        .history-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-radius: 8px; cursor: pointer; font-size: 14px; color: #555; transition: 0.2s; }
-        .history-item:hover { background: #f3f4f6; }
-        .history-item.active { background: #eef1ff; color: var(--accent-color); font-weight: bold; }
+        .history-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-radius: 8px; cursor: pointer; font-size: 14px; color: var(--text-color); transition: 0.2s; border: 1px solid transparent;}
+        .history-item:hover { background: var(--msg-user-bg); }
+        .history-item.active { background: var(--msg-user-bg); color: var(--accent-color); font-weight: bold; border-color: var(--border-color);}
         
-        /* 文本容器，超出省略号 */
         .history-title { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none;}
-        
-        /* 删除按钮 */
         .delete-btn { display: none; font-size: 16px; cursor: pointer; padding: 2px 5px; border-radius: 4px; transition: 0.2s; }
-        .history-item:hover .delete-btn { display: block; } /* 鼠标悬停时才显示垃圾桶 */
-        .delete-btn:hover { background: #ffcccc; color: var(--danger-color); }
+        .history-item:hover .delete-btn { display: block; }
+        .delete-btn:hover { background: var(--danger-color); color: #fff; }
 
         /* 主聊天区 */
         .main-content { flex: 1; display: flex; flex-direction: column; background-color: var(--bg-color); position: relative; }
         
         /* 顶部设置 */
-        .header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; background: rgba(249, 249, 251, 0.9); backdrop-filter: blur(10px); border-bottom: 1px solid transparent;}
-        .settings-group { display: flex; gap: 10px; align-items: center; }
+        .header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; background: var(--bg-color); border-bottom: 1px solid var(--border-color); flex-wrap: wrap; gap: 10px;}
+        .settings-group { display: flex; gap: 10px; align-items: center; flex-wrap: wrap;}
         .header select, .header input { padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color); outline: none; font-size: 13px; }
-        .header input[type="password"] { width: 200px; }
-        .save-btn { padding: 8px 15px; background: var(--accent-color); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 13px;}
+        .header input[type="password"] { width: 180px; }
+        .header input[type="text"] { width: 180px; }
+        .save-btn { padding: 8px 15px; background: var(--accent-color); color: #fff; border: none; border-radius: 8px; cursor: pointer; font-size: 13px;}
         
+        /* 主题切换按钮 */
+        .theme-btn { padding: 8px 15px; background: transparent; color: var(--text-color); border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer; font-size: 13px; transition: 0.2s;}
+        .theme-btn:hover { background: var(--msg-user-bg); }
+
         /* 聊天内容区 */
         .chat-box { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 25px; scroll-behavior: smooth;}
         .message-row { display: flex; width: 100%; }
@@ -62,8 +95,8 @@
         .message strong { color: var(--accent-color); font-weight: bold;}
         .message br { margin-bottom: 5px; }
 
-        .user .message { background: var(--msg-user-bg); border-bottom-right-radius: 4px; color: var(--text-color); }
-        .bot .message { background: var(--msg-bot-bg); border-bottom-left-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); border: 1px solid var(--border-color); color: var(--text-color);}
+        .user .message { background: var(--msg-user-bg); border-bottom-right-radius: 4px; color: var(--text-color); border: 1px solid var(--border-color); }
+        .bot .message { background: var(--msg-bot-bg); border-bottom-left-radius: 4px; box-shadow: 0 2px 8px var(--shadow); border: 1px solid var(--border-color); color: var(--text-color);}
 
         /* 光标闪烁动效 */
         .cursor { display: inline-block; width: 6px; height: 16px; background: var(--accent-color); vertical-align: middle; margin-left: 4px; animation: blink 1s step-end infinite; }
@@ -71,26 +104,31 @@
 
         /* 底部输入区 */
         .input-area { padding: 20px; display: flex; justify-content: center; }
-        .input-container { width: 100%; max-width: 800px; display: flex; align-items: flex-end; background: var(--input-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 10px 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); transition: 0.3s; }
-        .input-container:focus-within { border-color: var(--accent-color); box-shadow: 0 4px 20px rgba(77, 107, 254, 0.15); }
+        .input-container { width: 100%; max-width: 800px; display: flex; align-items: flex-end; background: var(--input-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 10px 15px; box-shadow: 0 4px 20px var(--shadow); transition: 0.3s; }
+        .input-container:focus-within { border-color: var(--accent-color); }
         
         .input-container input[type="text"] { flex: 1; border: none; background: transparent; color: var(--text-color); outline: none; font-size: 15px; padding: 10px 5px; }
         .btn-group { display: flex; gap: 8px; align-items: center; margin-bottom: 5px;}
-        .icon-btn { background: transparent; border: none; font-size: 18px; cursor: pointer; padding: 8px; border-radius: 8px; transition: 0.2s; }
-        .icon-btn:hover { background: #f3f4f6; }
+        .icon-btn { background: transparent; border: none; font-size: 18px; cursor: pointer; padding: 8px; border-radius: 8px; transition: 0.2s; color: var(--text-color);}
+        .icon-btn:hover { background: var(--msg-user-bg); }
         
-        .send-btn { background: var(--accent-color); color: white; border: none; border-radius: 10px; width: 36px; height: 36px; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: 0.2s; }
-        .send-btn:hover { background: #3b58db; }
-        .send-btn:disabled { background: #ccc; cursor: not-allowed; }
+        .send-btn { background: var(--accent-color); color: #fff; border: none; border-radius: 10px; width: 36px; height: 36px; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: 0.2s; }
+        .send-btn:hover { opacity: 0.8; }
+        .send-btn:disabled { background: #555; cursor: not-allowed; }
         
         .img-preview { max-width: 100px; max-height: 100px; border-radius: 8px; margin-right: 10px; display: none; border: 1px solid var(--border-color);}
         #imageInput, #importFile { display: none; }
 
+        /* 作者信息面板 */
+        .author-info { font-size: 12px; color: var(--text-color); opacity: 0.7; text-align: center; padding: 10px; border-top: 1px solid var(--border-color); margin-top: auto;}
+        .author-info a { color: var(--accent-color); text-decoration: none; }
+        .author-info a:hover { text-decoration: underline; }
+
         ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 10px; }
     </style>
 </head>
-<body>
+<body class="theme-dark">
 
 <!-- 侧边栏 -->
 <div class="sidebar">
@@ -103,6 +141,13 @@
         <input type="file" id="importFile" accept=".json" onchange="importChat(this)">
     </div>
     <div class="history-list" id="historyList"></div>
+    
+    <!-- 底部联系方式 -->
+    <div class="author-info">
+        <div>👨‍💻 开发者: SeekDeepHam</div>
+        <div>📧 xuyihuan0105@163.com</div>
+        <div>💬 微信: xyc657260</div>
+    </div>
 </div>
 
 <!-- 主界面 -->
@@ -118,9 +163,13 @@
             <button class="save-btn" onclick="exportChat()">导出对话</button>
         </div>
         
-        <div id="customConfig" style="display:none; gap: 10px;">
-            <input type="text" id="customUrl" placeholder="API URL" onchange="saveSettings()">
-            <input type="text" id="customModel" placeholder="模型名" onchange="saveSettings()">
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <div id="customConfig" style="display:none; gap: 5px;">
+                <input type="text" id="customUrl" placeholder="API URL" onchange="saveSettings()">
+                <input type="text" id="customModel" placeholder="模型名" onchange="saveSettings()">
+            </div>
+            <!-- 主题切换按钮 -->
+            <button class="theme-btn" id="themeBtn" onclick="toggleTheme()">🌙 深色模式</button>
         </div>
     </div>
     
@@ -148,7 +197,8 @@
     let allChats = JSON.parse(localStorage.getItem('chatcq_all_chats')) || {};
     let currentChatId = localStorage.getItem('chatcq_current_id') || null;
 
-    const SYSTEM_PROMPT = "你现在扮演的角色名叫 'ChatCQ'，是一个专为业余无线电爱好者（HAM）打造的硬核 AI 助手。请记住：1. 你的名字叫 ChatCQ，不要自称 DeepSeek 或其他名字；2. 你的语气要像老火腿一样专业、幽默、接地气；3. 优先使用火腿黑话（如 73、QTH、驻波、打卫星等）回答问题。";
+    // 核心提示词
+    const SYSTEM_PROMPT = "你现在扮演的角色名叫 'ChatCQ'，是一个由火腿 SeekDeepHam 独立开发的、专为业余无线电爱好者（HAM）打造的硬核 AI 助手。请记住：1. 你的名字叫 ChatCQ，绝对不要自称 DeepSeek 或其他名字；2. 如果用户问你是什么模型，回答：我是由 SeekDeepHam 开发的 ChatCQ；3. 语气要专业、幽默、接地气，多用火腿黑话。";
 
     window.onload = function() {
         const savedKey = localStorage.getItem('chatcq_api_key');
@@ -157,6 +207,7 @@
         if (savedProvider) document.getElementById('apiProvider').value = savedProvider;
         
         onProviderChange();
+        initTheme(); // 加载保存的主题
 
         if (Object.keys(allChats).length === 0 || !currentChatId || !allChats[currentChatId]) {
             createNewChat("主对话 (Main)");
@@ -166,6 +217,27 @@
         }
     };
 
+    // ================= 主题切换逻辑 =================
+    const themes = ['theme-dark', 'theme-light', 'theme-hacker'];
+    const themeNames = { 'theme-dark': '🌙 深色模式', 'theme-light': '☀️ 白色模式', 'theme-hacker': '💻 黑客模式' };
+    
+    function initTheme() {
+        const savedTheme = localStorage.getItem('chatcq_theme') || 'theme-dark';
+        document.body.className = savedTheme;
+        document.getElementById('themeBtn').innerText = themeNames[savedTheme];
+    }
+
+    function toggleTheme() {
+        let currentTheme = document.body.className;
+        let nextIndex = (themes.indexOf(currentTheme) + 1) % themes.length;
+        let nextTheme = themes[nextIndex];
+        
+        document.body.className = nextTheme;
+        document.getElementById('themeBtn').innerText = themeNames[nextTheme];
+        localStorage.setItem('chatcq_theme', nextTheme);
+    }
+
+    // ================= 其他逻辑 =================
     function onProviderChange() {
         const provider = document.getElementById('apiProvider').value;
         const customConfig = document.getElementById('customConfig');
@@ -186,10 +258,10 @@
     function saveSettings() {
         localStorage.setItem('chatcq_api_key', document.getElementById('apiKeyInput').value.trim());
         localStorage.setItem('chatcq_provider', document.getElementById('apiProvider').value);
+        localStorage.setItem('chatcq_custom_url', document.getElementById('customUrl').value);
+        localStorage.setItem('chatcq_custom_model', document.getElementById('customModel').value);
     }
 
-    // ========== 会话管理（新增了删除功能） ==========
-    
     function renderHistoryList() {
         const list = document.getElementById('historyList');
         list.innerHTML = '';
@@ -197,39 +269,30 @@
             const div = document.createElement('div');
             div.className = `history-item ${id === currentChatId ? 'active' : ''}`;
             
-            // 标题
             const titleSpan = document.createElement('span');
             titleSpan.className = 'history-title';
             titleSpan.innerText = allChats[id].name;
             
-            // 删除按钮
             const delBtn = document.createElement('span');
             delBtn.className = 'delete-btn';
             delBtn.innerText = '🗑️';
-            delBtn.title = "删除此对话";
             delBtn.onclick = (e) => {
-                e.stopPropagation(); // 阻止触发父元素的点击事件（防止顺带切换对话）
+                e.stopPropagation();
                 deleteChat(id);
             };
 
             div.appendChild(titleSpan);
             div.appendChild(delBtn);
-            
             div.onclick = () => loadChat(id);
             list.appendChild(div);
         });
     }
 
-    // 删除指定对话的核心逻辑
     function deleteChat(chatId) {
-        const chatName = allChats[chatId].name;
-        if (!confirm(`确定要永久删除对话【${chatName}】吗？此操作不可恢复。`)) return;
-
-        // 从数据中移除
+        if (!confirm(`确定要永久删除对话【${allChats[chatId].name}】吗？`)) return;
         delete allChats[chatId];
         saveAllData();
 
-        // 如果删的是当前正在看的对话，就自动切到一个新对话，或者切换到列表第一个
         if (chatId === currentChatId) {
             const remainingIds = Object.keys(allChats);
             if (remainingIds.length > 0) {
@@ -254,7 +317,7 @@
         
         document.getElementById('chatBox').innerHTML = '';
         chatHistory = [];
-        appendMessageHTML("你好！我是 ChatCQ，你的火腿专属 AI。有什么我可以帮你的吗？", 'bot');
+        appendMessageHTML("你好！我是 ChatCQ，由 SeekDeepHam 开发的专属火腿 AI。今天想聊点什么？", 'bot');
     }
 
     function loadChat(chatId) {
@@ -270,7 +333,7 @@
         chatHistory = []; 
         
         if (chatData.messages.length === 0) {
-            appendMessageHTML("你好！我是 ChatCQ，你的火腿专属 AI。有什么我可以帮你的吗？", 'bot');
+            appendMessageHTML("你好！我是 ChatCQ，由 SeekDeepHam 开发的专属火腿 AI。今天想聊点什么？", 'bot');
         } else {
             chatData.messages.forEach(msg => {
                 let text = typeof msg.content === 'string' ? msg.content : (msg.content.map ? msg.content.map(c => c.text || "").join(" ") : "");
@@ -286,14 +349,13 @@
         localStorage.setItem('chatcq_all_chats', JSON.stringify(allChats));
     }
 
-    // ========== 导入导出 ==========
     function exportChat() {
         if (!currentChatId) return;
         const chatData = allChats[currentChatId];
         
         const exportData = {
             platform: "ChatCQ",
-            version: "1.0",
+            version: "1.1",
             chatName: chatData.name,
             exportTime: new Date().toISOString(),
             history: chatData.messages
@@ -315,9 +377,7 @@
         reader.onload = function(e) {
             try {
                 const data = JSON.parse(e.target.result);
-                if (!data.history || !Array.isArray(data.history)) {
-                    throw new Error("格式不正确");
-                }
+                if (!data.history || !Array.isArray(data.history)) throw new Error("格式不正确");
 
                 const chatId = "chat_" + Date.now();
                 allChats[chatId] = { name: data.chatName || "导入的对话", messages: data.history };
@@ -335,7 +395,6 @@
         reader.readAsText(file);
     }
 
-    // ========== 聊天核心逻辑 ==========
     function previewImage(input) {
         if (input.files && input.files[0]) {
             var reader = new FileReader();
@@ -363,7 +422,6 @@
         
         if (!text && !base64Image) return;
         if (!apiKey) return alert("请先在右上角填入 API Key！");
-        if (!API_URL) return alert("请先选择厂商！");
 
         let userMsg = text;
         if (base64Image) userMsg = (text ? text + "\n" : "") + "[已上传图片]";
@@ -388,6 +446,8 @@
         const cursorSpan = botMsgDiv.querySelector('.cursor');
 
         try {
+            await new Promise(r => setTimeout(r, 300)); // 缓冲一下防高频报错
+
             const messagesPayload = [
                 { role: "system", content: SYSTEM_PROMPT },
                 ...chatHistory
@@ -406,7 +466,7 @@
                 })
             });
 
-            if (!response.ok) throw new Error(`HTTP 状态码: ${response.status}`);
+            if (!response.ok) throw new Error(`HTTP: ${response.status}`);
 
             const reader = response.body.getReader();
             const decoder = new TextDecoder("utf-8");
@@ -425,7 +485,6 @@
                             const data = JSON.parse(line.slice(6));
                             const chunkContent = data.choices[0].delta.content || "";
                             fullReply += chunkContent;
-                            
                             textSpan.innerHTML = parseMarkdown(fullReply); 
                             scrollToBottom();
                         } catch (e) {}
@@ -434,14 +493,13 @@
             }
             
             cursorSpan.remove(); 
-            
             chatHistory.push({ role: "assistant", content: fullReply });
             allChats[currentChatId].messages.push({ role: "assistant", content: fullReply });
             saveAllData();
 
         } catch (error) {
             cursorSpan.remove();
-            textSpan.innerHTML = `<span style="color:red;">请求失败！原因：网络跨域拦截 或 Key 错误。</span>`;
+            textSpan.innerHTML = `<span style="color:red;">请求失败！原因：网络拦截或 Key 错误。</span>`;
         } finally {
             sendBtn.disabled = false;
             base64Image = null; 
@@ -466,6 +524,10 @@
     function scrollToBottom() {
         const chatBox = document.getElementById('chatBox');
         chatBox.scrollTop = chatBox.scrollHeight;
+    }
+</script>
+</body>
+</html>
     }
 </script>
 </body>
